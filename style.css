@@ -405,3 +405,5 @@ button.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none}
 .cloud-status.cloud-error{background:#fff3df;color:#8b5a17}
 .cloud-storage{padding:25px;margin-top:24px}
 @media(max-width:760px){.cloud-login{margin:20px auto;padding:18px}.cloud-login .panel{padding:22px}.cloud-status{padding:12px 16px}.cloud-status .actions{width:100%;flex-wrap:wrap}.cloud-status .btn{font-size:12px}}
+
+.btn.kakao{background:#fee500;color:#191919;border:1px solid #edcf00;font-weight:800}.btn.kakao:hover{background:#f4da00}.report-actions{flex-wrap:wrap;gap:10px}
