@@ -365,11 +365,13 @@ function migrateReportExperience() {
   });
   save();
 }
+if (typeof window === 'undefined' || !window.BRAIN_CLOUD_CONFIG?.url || !window.BRAIN_CLOUD_CONFIG?.anonKey) {
 ensureClasses();
 migrateReportExperience();
 advance();
 window.addEventListener('hashchange', render);
 render();
+}
 
 function ensureClasses() {
   if (!Array.isArray(db.classes)) { db.classes = Array.from({length:10}, (_,i)=>({id:'class'+(i+1),name:(i+1)+'반'})); save(); }

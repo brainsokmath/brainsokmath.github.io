@@ -395,3 +395,13 @@ button.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none}
 @media(max-width:1100px) and (min-width:761px){.sidebar .brand-logo{width:165px}}
 @media(max-width:760px){.mobile-brand .brand-logo{width:184px}.report-top .brand-logo{width:190px}.topbar .mobile-brand{min-width:0;flex:1}.top-right{flex-shrink:0}.topbar .top-right>.btn{font-size:11px;padding:8px}.topbar{gap:8px;padding-left:12px;padding-right:12px}}
 @media print{.brand-logo{width:210px!important}}
+.cloud-login{max-width:560px;margin:55px auto;padding:20px;color:#192638}
+.cloud-login>.brand{margin-bottom:30px;justify-content:center}
+.cloud-login .panel{padding:28px}
+.cloud-login h1{font-size:25px;line-height:1.6;margin:15px 0}
+.cloud-login form{display:grid;gap:16px;margin-top:22px}
+.cloud-login [role=alert]{color:#a6453e;line-height:1.8;margin:0}
+.cloud-status{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:12px 25px;background:#edf8f1;color:#285f46;font-size:13px;line-height:1.9;border-bottom:1px solid #d7ecdf}
+.cloud-status.cloud-error{background:#fff3df;color:#8b5a17}
+.cloud-storage{padding:25px;margin-top:24px}
+@media(max-width:760px){.cloud-login{margin:20px auto;padding:18px}.cloud-login .panel{padding:22px}.cloud-status{padding:12px 16px}.cloud-status .actions{width:100%;flex-wrap:wrap}.cloud-status .btn{font-size:12px}}
