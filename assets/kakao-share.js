@@ -1,8 +1,8 @@
 /* Only published card links are passed to Kakao; no scores, names or notes. */
 (() => {
-  const imageUrl = 'https://brainsokmath.github.io/assets/kakao-share-cover-v1.png';
-  const title = '브레인 속 수학 · 우리 아이의 수학 성장 이야기';
-  const description = '작은 성장도 소중하게, 아이의 수학 성장 기록을 함께 나눕니다.';
+  const imageUrl = 'https://brainsokmath.github.io/assets/kakao-share-cover-v2.png';
+  const title = '우리 아이의 수학 성장 이야기';
+  const description = ''; 
   let loading;
   function cardUrl(value) {
     const url = new URL(value, location.href);
