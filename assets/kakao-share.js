@@ -44,4 +44,5 @@
     } catch(error) { if(url)fallback(url,'카카오톡 공유 창을 열지 못했습니다. 링크 복사로 전달해주세요.');else toast(error.message); }
   }
   window.BrainKakao = {shareUrl, copy, nativeShare};
+  if(window.BRAIN_CLOUD_CONFIG?.kakaoJavaScriptKey)sdk().catch(()=>{});
 })();
