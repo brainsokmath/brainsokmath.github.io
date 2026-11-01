@@ -67,10 +67,16 @@
     }
     applyRemote(result);
   }
+  function loginEmail(value) {
+    const name=String(value||'').trim().toLowerCase();
+    if(name.includes('@'))return name;
+    if(!/^[a-z0-9_-]{3,30}$/.test(name))throw new Error('아이디를 확인해주세요.');
+    return name+'@brainsokmath.invalid';
+  }
   function login(error='') {
     ready=false;
-    document.getElementById('app').innerHTML='<main class="cloud-login">'+brand()+'<section class="panel"><span class="tag">관리자 전용</span><h1>브레인 속 수학 로그인</h1><p class="sub">PC와 휴대폰에서 같은 계정으로 로그인하면 학생과 성적 기록이 연결됩니다.</p><form id="cloudLoginForm"><label class="field"><span>이메일</span><input name="email" type="email" required autocomplete="username"></label><label class="field"><span>비밀번호</span><input name="password" type="password" required autocomplete="current-password"></label><p id="cloudLoginError" role="alert">'+esc(error)+'</p><button class="btn primary" type="submit">로그인</button></form><p class="sub">학부모는 전달받은 카드 링크를 열어주세요. 관리자 계정으로 로그인할 필요가 없습니다.</p></section></main>';
-    document.getElementById('cloudLoginForm').onsubmit=async event=>{event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;try{const f=new FormData(event.target);setSession(await raw('/auth/v1/token?grant_type=password',{email:f.get('email'),password:f.get('password')},false));event.target.reset();await load();}catch(error){login(error.message);}finally{button.disabled=false;}};
+    document.getElementById('app').innerHTML='<main class="cloud-login">'+brand()+'<section class="panel"><span class="tag">관리자 전용</span><h1>브레인 속 수학 로그인</h1><p class="sub">PC와 휴대폰에서 같은 계정으로 로그인하면 학생과 성적 기록이 연결됩니다.</p><form id="cloudLoginForm"><label class="field"><span>아이디</span><input name="username" type="text" required autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="math" maxlength="254"></label><label class="field"><span>비밀번호</span><input name="password" type="password" required autocomplete="current-password"></label><p id="cloudLoginError" role="alert">'+esc(error)+'</p><button class="btn primary" type="submit">로그인</button></form><p class="sub">학부모는 전달받은 카드 링크를 열어주세요. 관리자 계정으로 로그인할 필요가 없습니다.</p></section></main>';
+    document.getElementById('cloudLoginForm').onsubmit=async event=>{event.preventDefault();const button=event.target.querySelector('button');button.disabled=true;try{const f=new FormData(event.target);setSession(await raw('/auth/v1/token?grant_type=password',{email:loginEmail(f.get('username')),password:f.get('password')},false));event.target.reset();await load();}catch(error){login(error.message);}finally{button.disabled=false;}};
   }
   function initialSetup() {
     document.getElementById('app').innerHTML='<main class="cloud-login">'+brand()+'<section class="panel"><h1>처음 한 번, 기록을 연결합니다</h1><p class="sub">이 기기에 보관된 학생 '+db.students.length+'명과 성적 '+db.records.length+'건을 서버에 등록하면 다른 기기에서도 사용할 수 있습니다. 기존 기록이 있는 PC에서 진행하세요.</p><div class="actions"><button class="btn primary" onclick="BrainCloud.initialize(false)">이 기기 기록으로 시작</button><button class="btn" onclick="BrainCloud.initialize(true)">학생 없이 새로 시작</button></div><p id="cloudSetupError" role="alert"></p></section></main>';
