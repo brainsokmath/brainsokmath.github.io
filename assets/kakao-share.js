@@ -1,6 +1,6 @@
 /* Only published card links are passed to Kakao; no scores, names or notes. */
 (() => {
-  const imageUrl = 'https://brainsokmath.github.io/assets/brain-math-logo-profile-v1.png';
+  const imageUrl = 'https://brainsokmath.github.io/assets/kakao-share-cover-v1.png';
   const title = '브레인 속 수학 · 우리 아이의 수학 성장 이야기';
   const description = '작은 성장도 소중하게, 아이의 수학 성장 기록을 함께 나눕니다.';
   let loading;
@@ -40,7 +40,7 @@
       if (!key) return fallback(url, '카카오톡 전용 공유 연결을 준비하고 있습니다. 지금은 링크를 복사해서 보낼 수 있어요.');
       const kakao = await sdk();
       if (!kakao.isInitialized()) kakao.init(key);
-      kakao.Share.sendDefault({objectType:'feed', content:{title,description,imageUrl,link:{mobileWebUrl:url,webUrl:url}}, buttons:[{title:'성장 이야기 보기',link:{mobileWebUrl:url,webUrl:url}}]});
+      kakao.Share.sendDefault({objectType:'feed', content:{title,description,imageUrl,imageWidth:1200,imageHeight:630,link:{mobileWebUrl:url,webUrl:url}}, buttons:[{title:'성장 이야기 보기',link:{mobileWebUrl:url,webUrl:url}}]});
     } catch(error) { if(url)fallback(url,'카카오톡 공유 창을 열지 못했습니다. 링크 복사로 전달해주세요.');else toast(error.message); }
   }
   window.BrainKakao = {shareUrl, copy, nativeShare};
