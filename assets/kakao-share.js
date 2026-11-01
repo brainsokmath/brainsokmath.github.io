@@ -2,7 +2,7 @@
 (() => {
   const imageUrl = 'https://brainsokmath.github.io/assets/kakao-share-cover-v2.png';
   const title = '우리 아이의 수학 성장 이야기';
-  const description = ''; 
+  const description = '아이의 수학 성장 기록을 보내드립니다.';
   let loading;
   function cardUrl(value) {
     const url = new URL(value, location.href);
