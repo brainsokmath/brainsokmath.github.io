@@ -355,7 +355,7 @@ function migrateReportExperience() {
     if (!db.writings.some(w => w.student === s.id) && (s.evaluation || s.plan || s.message)) db.writings.push({ id: crypto.randomUUID(), student: s.id, date: new Date().toISOString(), period: 'year', evaluation: s.evaluation, message: s.message, plan: s.plan, migrated: true });
   });
   // Previously shared reports retain their saved content, with sample character metadata only.
-  db.shares.forEach(share => { if (!('gender' in share.student)) share.student.gender = sampleGender[share.student.id] || ''; });
+  db.shares.forEach(share => { if (share.student && !('gender' in share.student)) share.student.gender = sampleGender[share.student.id] || ''; });
   [...db.school, ...db.academy].forEach(t => {
     // Old archived types return to the list; deleted types stay in the trash.
     t.archived = Boolean(t.deletedAt);
