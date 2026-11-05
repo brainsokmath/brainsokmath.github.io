@@ -5,7 +5,7 @@
   const sessionKey = 'brain-cloud-session-v1';
   let session = JSON.parse(localStorage.getItem(sessionKey) || 'null');
   let ready = false, version = 0, pending = null, saving = false, timer, conflicted = false, checking = false;
-  let remoteCards = new Map(), requestId = 0;
+  let remoteCards = new Map(), requestId = 0, cleanFormState = '';
   const originalRender = render, originalSave = save, originalShareLink = showShareLink;
   async function request(path, body, authenticated = true) {
     if (authenticated && session && Date.now() > session.expires_at * 1000 - 60000) {
@@ -29,18 +29,18 @@
   function status(message, error = false) {
     let el = document.getElementById('cloudStatus');
     if (!el && document.querySelector('.main')) { document.querySelector('.main').insertAdjacentHTML('afterbegin','<div id="cloudStatus" class="cloud-status" role="status"></div>');el=document.getElementById('cloudStatus'); }
-    if(el){el.classList.toggle('cloud-error',error);el.innerHTML='<span>'+esc(message)+'</span><div class="actions"><button class="btn small" onclick="BrainCloud.retry()">다시 저장</button><button class="btn small" onclick="BrainCloud.reload()">다른 기기 변경 확인</button><button class="btn small" onclick="BrainCloud.logout()">로그아웃</button></div>';}
+    if(el){el.classList.toggle('cloud-error',error);el.innerHTML='<span>'+esc(message)+'</span>'+(error?'<button class="btn small" onclick="BrainCloud.retry()">'+(conflicted?'저장 문제 해결':'다시 시도')+'</button>':'');}
   }
   function storePending() { if(session?.user?.id)localStorage.setItem('brain-cloud-pending-'+session.user.id,JSON.stringify({version,payload:pending})); }
-  function queue() { if(!ready)return;pending=structuredClone(db);storePending();status('서버에 저장 중입니다…');clearTimeout(timer);timer=setTimeout(flush,600); }
+  function queue() { if(!ready)return;pending=structuredClone(db);storePending();status('저장 중…');clearTimeout(timer);timer=setTimeout(flush,600); }
   async function flush() {
     if(saving||!pending||conflicted)return !pending;
     saving=true;let succeeded=false;const payload=pending;
     try {
       const result=await rpc('brain_save',{p_version:version,p_payload:compactWorkspace(payload)});
-      if(result.conflict){conflicted=true;status('다른 기기에서 먼저 수정했습니다. 이 기기의 변경을 백업한 뒤 최신 기록을 불러와주세요.',true);return false;}
-      succeeded=true;version=Number(result.version);if(pending===payload)pending=null;storePending();status(pending?'추가 변경 저장 중…':'서버 저장 완료 · PC와 모바일에서 같은 기록을 사용합니다.');return true;
-    } catch(error){status(error.message+' 변경 내용은 이 기기에 보관했습니다. 다시 저장을 눌러주세요.',true);return false;}
+      if(result.conflict){conflicted=true;status('다른 기기의 수정과 겹쳤어요. 저장 문제 해결을 눌러주세요. 입력한 내용은 이 기기에 보관했습니다.',true);return false;}
+      succeeded=true;version=Number(result.version);if(pending===payload)pending=null;storePending();status(pending?'저장 중…':'저장 완료');return true;
+    } catch(error){status('저장하지 못했어요. 입력한 내용은 이 기기에 보관했습니다. 다시 시도해 주세요.',true);return false;}
     finally {saving=false;if(pending&&!conflicted&&succeeded){clearTimeout(timer);timer=setTimeout(flush,200);}}
   }
   function compactWorkspace(value) {
@@ -50,6 +50,8 @@
   }
   async function storagePanel() {
     const content=document.querySelector('.main .content');if(!content)return;
+    content.insertAdjacentHTML('beforeend','<section class="panel cloud-storage" aria-label="관리자 계정"><h2>관리자 계정</h2><p class="sub">사용을 마치거나 다른 계정으로 들어가려면 로그아웃하세요. 저장한 학생과 성적 기록은 그대로 유지됩니다.</p><button class="btn" onclick="BrainCloud.logout()">로그아웃</button></section>');
+    if(conflicted)content.insertAdjacentHTML('beforeend','<section class="panel cloud-storage"><h2>저장 문제 해결</h2><p class="sub">두 기기에서 동시에 수정한 내용이 있습니다. 아래 버튼을 누르면 이 기기의 변경 내용을 백업 파일로 보관한 뒤 서버의 최신 기록을 엽니다. 백업 파일은 설정의 백업 복원에서 사용할 수 있습니다.</p><button class="btn" onclick="BrainCloud.reload()">내 변경 백업 후 최신 기록 열기</button></section>');
     content.insertAdjacentHTML('beforeend','<section class="panel cloud-storage"><h2>공통 저장소</h2><p class="sub" id="cloudUsage">용량을 확인하고 있습니다…</p><p class="sub">관리자 로그인으로 PC·모바일 기록을 함께 사용합니다. 학부모에게는 생성한 카드만 공개됩니다. 무료 요금제는 사용량이 적으면 일시정지될 수 있습니다.</p></section>');
     try{const result=await rpc('brain_usage');const el=document.getElementById('cloudUsage');if(el)el.textContent='데이터베이스 약 '+(result.bytes/1024/1024).toFixed(1)+'MB / 무료 한도 500MB · 공유 카드 '+result.cards+'장';}catch(error){const el=document.getElementById('cloudUsage');if(el)el.textContent='용량 조회 실패 · '+error.message;}
   }
@@ -63,7 +65,7 @@
     if(!result.payload){initialSetup();return;}
     const saved=JSON.parse(localStorage.getItem('brain-cloud-pending-'+session.user.id)||'null');
     if(saved?.payload){
-      if(validDatabase(saved.payload)){db=saved.payload;version=Number(saved.version);pending=saved.payload;ready=true;conflicted=Number(result.version)!==version;render();if(conflicted)status('다른 기기의 수정과 겹친 변경이 있습니다. 백업 후 최신 기록을 불러와주세요.',true);else await flush();return;}
+      if(validDatabase(saved.payload)){db=saved.payload;version=Number(saved.version);pending=saved.payload;ready=true;conflicted=Number(result.version)!==version;render();if(conflicted)status('다른 기기의 수정과 겹쳤어요. 저장 문제 해결을 눌러주세요.',true);else await flush();return;}
     }
     applyRemote(result);
   }
@@ -92,10 +94,28 @@
       const result=await rpc('brain_load');pending=null;conflicted=false;storePending();applyRemote(result);
     }catch(error){status(error.message,true);}finally{checking=false;}
   }
+  function formState() {
+    return JSON.stringify([...document.querySelectorAll('.main input,.main select,.main textarea')].map(el=>[el.id,el.name,el.value,el.checked]));
+  }
+  function canRefreshAutomatically() {
+    return ready&&!pending&&!saving&&!checking&&!conflicted&&!document.hidden&&!location.hash&&!document.getElementById('modal')?.open&&!document.getElementById('letterForm')&&!document.activeElement?.matches('input,select,textarea,[contenteditable="true"]')&&formState()===cleanFormState;
+  }
+  async function syncRemote() {
+    if(!canRefreshAutomatically())return;
+    checking=true;const startedVersion=version;
+    try{
+      const remote=await rpc('brain_head');
+      if(Number(remote.version)<=version)return;
+      const result=await rpc('brain_load');
+      // A user may begin typing or saving while the request is in flight.
+      checking=false;
+      if(version===startedVersion&&canRefreshAutomatically()&&Number(result.version)>version)applyRemote(result);
+    }catch(error){status('연결을 확인하고 있어요. 입력한 내용은 이 기기에 보관됩니다.',true);}finally{checking=false;}
+  }
   render = function(){
     if(location.hash.startsWith('#share/'))return renderShared(location.hash.slice(7));
     if(!ready)return login();
-    originalRender();if(page==='settings')storagePanel();if(!location.hash.startsWith('#report/')&&!location.hash.startsWith('#preview/'))status(conflicted?'다른 기기의 수정과 겹쳤습니다. 백업 후 최신 기록을 불러와주세요.':pending?'이 기기에 보관된 변경이 있습니다. 서버 저장을 확인해주세요.':'서버 연결됨 · PC·모바일 공통 기록',!!conflicted);
+    originalRender();if(page==='settings')storagePanel();cleanFormState=formState();if(!location.hash.startsWith('#report/')&&!location.hash.startsWith('#preview/'))status(conflicted?'다른 기기의 수정과 겹쳤어요. 저장 문제 해결을 눌러주세요.':pending?'저장 중…':'저장 완료',!!conflicted);
   };
   save = function(){originalSave();queue();};
   showShareLink = async function(card){
@@ -115,10 +135,10 @@
       }else throw new Error(result.error==='try_later'?'입력 횟수가 초과되었습니다. 잠시 후 다시 시도해주세요.':'카드를 찾을 수 없습니다. 브레인 속 수학에 링크를 다시 확인해주세요.');
     }catch(error){document.getElementById('app').innerHTML='<main class="cloud-login">'+brand()+'<section class="panel"><h1>카드를 열지 못했어요</h1><p>'+esc(error.message)+'</p><button class="btn" onclick="location.reload()">다시 시도</button></section></main>';}
   };
-  window.BrainCloud={initialize,reload,retry:flush,async logout(){if(pending){await flush();if(pending)return toast('아직 서버에 저장되지 않았습니다. 백업하거나 저장을 완료한 뒤 로그아웃해주세요.');}ready=false;session=null;remoteCards.clear();localStorage.removeItem(sessionKey);login();}};
+  window.BrainCloud={initialize,reload,retry:()=>conflicted?navigate('settings'):pending?flush():syncRemote(),async logout(){if(pending){await flush();if(pending)return toast('아직 서버에 저장되지 않았습니다. 백업하거나 저장을 완료한 뒤 로그아웃해주세요.');}ready=false;session=null;remoteCards.clear();localStorage.removeItem(sessionKey);login();}};
   window.addEventListener('online',()=>{if(ready)flush();});
   window.addEventListener('beforeunload',e=>{if(pending){e.preventDefault();e.returnValue='';}});
-  setInterval(async()=>{if(!ready||pending||checking||document.hidden||location.hash)return;try{const remote=await rpc('brain_head');if(Number(remote.version)>version)status('다른 기기에서 변경한 기록이 있습니다. 변경 확인을 눌러 불러와주세요.');}catch(error){status('서버 연결을 확인해주세요. '+error.message,true);}},30000);
+  setInterval(syncRemote,30000);
   window.addEventListener('hashchange', render);
   if(location.hash.startsWith('#share/'))renderShared(location.hash.slice(7));
   else if(session)load().catch(error=>login(error.message));else login();
